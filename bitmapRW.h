@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <stddef.h>
+#include <string.h>
 #pragma pack(push, 1)
 
 typedef struct BITMAPFILEHEADER
@@ -36,3 +37,6 @@ typedef struct BITMAPINFOHEADER
 #pragma pack(pop)
 
 unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader, BITMAPFILEHEADER *bitmapFileHeader);
+
+void WriteBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader, 
+    BITMAPFILEHEADER *bitmapFileHeader, unsigned char *bitmapImage);

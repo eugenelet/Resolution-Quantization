@@ -1,6 +1,7 @@
-#include "readBMP.h"
+#include "bitmapRW.h"
 
-unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader, BITMAPFILEHEADER *bitmapFileHeader)
+unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader,
+ BITMAPFILEHEADER *bitmapFileHeader)
 {
     FILE *filePtr; // file pointer
 
@@ -61,4 +62,58 @@ unsigned char *LoadBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader
     //close file and return bitmap iamge data
     fclose(filePtr);
     return bitmapImage;
+}
+
+void WriteBitmapFile(char *filename, BITMAPINFOHEADER *bitmapInfoHeader, 
+    BITMAPFILEHEADER *bitmapFileHeader, unsigned char *bitmapImage)
+{
+    FILE *filePtr; // file pointer
+
+    int imageIdx=0;  // image index counter
+    unsigned char tempRGB;  // swap variable
+
+    //open filename in write binary mode
+    filePtr = fopen(filename,"wb");
+    if (filePtr == NULL)
+        return;
+
+    //verify that this is a bmp file by check bitmap id
+    if (bitmapFileHeader->bfType !=0x4D42)
+    {
+        fclose(filePtr);
+        return;
+    }
+
+    //write the bitmap file header
+    fwrite(bitmapFileHeader, sizeof(BITMAPFILEHEADER),1,filePtr);
+
+
+    //write the bitmap info header
+    fwrite(bitmapInfoHeader, sizeof(BITMAPINFOHEADER),1,filePtr); 
+
+    //move file point to the begging of bitmap data
+    fseek(filePtr, bitmapFileHeader->bfOffBits, SEEK_SET);
+
+
+    //make sure bitmap image data is not empty
+    if (bitmapImage == NULL)
+    {
+        std::cout << "Image empty!" << std::endl;
+        fclose(filePtr);
+        return;
+    }
+
+    //swap the r and b values to get RGB (bitmap is BGR)
+    for (imageIdx = 0;imageIdx < bitmapInfoHeader->biSizeImage;imageIdx+=3)
+    {
+        tempRGB = bitmapImage[imageIdx];
+        bitmapImage[imageIdx] = bitmapImage[imageIdx + 2];
+        bitmapImage[imageIdx + 2] = tempRGB;
+    }
+
+    //write the bitmap image data
+    fwrite(bitmapImage,bitmapInfoHeader->biSizeImage,1,filePtr);
+
+    //close file and return bitmap iamge data
+    fclose(filePtr);
 }
