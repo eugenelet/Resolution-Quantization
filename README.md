@@ -10,3 +10,4 @@ To compile
 
 To run the executable
 > **./[executable file name] [input file]**
+> The number of output bmp files generated will be dependent on the value of DOWN_QUANTIZE
