@@ -1,42 +1,65 @@
 #include "bitmapRW.h"
 
+#define DOWN_QUANTIZE 7
+
 using namespace std;
+
+
+int pow2(int exponent){
+	int base = 1;
+	for(int i = 0; i < exponent; i++)
+		base *= 2;
+	return base;
+}
 
 int main(int argc, char** argv){
 
-    if ( (argc < 3) || (strcmp(argv[1],"-h") == 0) ) { 
-          cerr << "usage: ./[executable file name] [input file name] [output file name]" << endl;
+    if ( (argc < 2) || (strcmp(argv[1],"-h") == 0) ) { 
+          cerr << "usage: ./[executable file name] [input file name]" << endl;
           exit(1);
     } 
 
     char* input_file = argv[1];
-    char* output_file = argv[2];
+    char* output_file;
+    char* output_string;
+    if(strcmp(input_file, "input1.bmp") == 0)
+    	output_string = "output1_";
+    else if(strcmp(input_file, "input2.bmp") == 0)
+    	output_string = "output2_";
+    else
+    	output_string = "output";
+    char buffer[10];
 	BITMAPINFOHEADER *bitmapInfoHeader = new BITMAPINFOHEADER;
 	BITMAPFILEHEADER *bitmapFileHeader = new BITMAPFILEHEADER;
 	unsigned char *bitmapData;
-	bitmapData = LoadBitmapFile(input_file, bitmapInfoHeader, bitmapFileHeader);
 
-	cout << "File Type: " << bitmapFileHeader->bfType << endl;
-	cout << "File Size: " << bitmapFileHeader->bfSize << endl;
-	cout << "Reserved 1: " << bitmapFileHeader->bfReserved1 << endl;
-	cout << "Reserved 2: " << bitmapFileHeader->bfReserved2 << endl;
-	cout << "Offset bytes: " << bitmapFileHeader->bfOffBits << endl;
+	for(int i = 1; i <= DOWN_QUANTIZE; i++){
+		bitmapData = LoadBitmapFile(input_file, bitmapInfoHeader, bitmapFileHeader);
+		// bitmapInfoHeader->biBitCount = (8-i)*4;
+		// bitmapInfoHeader->biSizeImage = (bitmapInfoHeader->biBitCount*bitmapInfoHeader->biWidth*
+												// bitmapInfoHeader->biHeight)/8 ;
+		for(int row = 0; row < bitmapInfoHeader->biHeight; row++)
+			for(int col = 0; col < bitmapInfoHeader->biWidth; col++){
+				for(int count = 0; count < (bitmapInfoHeader->biBitCount)/8; count++){
+					bitmapData[row*bitmapInfoHeader->biWidth*((bitmapInfoHeader->biBitCount)/8) + col*((bitmapInfoHeader->biBitCount)/8) + count] 
+						= (bitmapData[row*bitmapInfoHeader->biWidth*((bitmapInfoHeader->biBitCount)/8) 
+							+ col*((bitmapInfoHeader->biBitCount)/8) + count] 
+							/ pow2(i) );	
+					bitmapData[row*bitmapInfoHeader->biWidth*((bitmapInfoHeader->biBitCount)/8) + col*((bitmapInfoHeader->biBitCount)/8) + count] 
+						= (bitmapData[row*bitmapInfoHeader->biWidth*((bitmapInfoHeader->biBitCount)/8) 
+							+ col*((bitmapInfoHeader->biBitCount)/8) + count] 
+							* pow2(i) );	
+				}
+			}
+		sprintf(buffer, "%d", i);
+		char *tmp = (char*) malloc(1 + strlen(output_string) + strlen(buffer) + strlen(".bmp"));
+		strcpy(tmp, output_string);
+		strcat(tmp, buffer);
+		strcat(tmp, ".bmp");
+		output_file = tmp;
 
-	cout << endl << "============================================" << endl << endl;
-
-	cout << "Struct Size: " << bitmapInfoHeader->biSize << endl;
-	cout << "Width: " << bitmapInfoHeader->biWidth << endl;
-	cout << "Height: " << bitmapInfoHeader->biHeight << endl;
-	cout << "Plane: " << bitmapInfoHeader->biPlanes << endl;
-	cout << "Bit/Pixel: " << bitmapInfoHeader->biBitCount << endl;
-	cout << "Compression: " << bitmapInfoHeader->biCompression << endl;
-	cout << "Image Size: " << bitmapInfoHeader->biSizeImage << endl;
-	cout << "X Pixel/Meter: " << bitmapInfoHeader->biXPelsPerMeter << endl;
-	cout << "Y Pixel/Meter: " << bitmapInfoHeader->biYPelsPerMeter << endl;
-	cout << "Num Color: " << bitmapInfoHeader->biClrUsed << endl;
-	cout << "important Color: " << bitmapInfoHeader->biClrImportant << endl;
-
-	WriteBitmapFile(output_file, bitmapInfoHeader, bitmapFileHeader, bitmapData);
+		WriteBitmapFile(output_file, bitmapInfoHeader, bitmapFileHeader, bitmapData);
+	}
 
 }
 
